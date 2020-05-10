@@ -1,0 +1,26 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+#build dev version for testing
+before_install:
+    - docker build -t chentowsky/react-test -f ./client/Dockerfile.dev ./client
+
+#test running section
+script:
+    - docker run -e CI=true chentowsky/react-test npm test
+
+#build the production images
+after_success:
+    - docker build -t chentowsky/multi-client ./client 
+    - docker build -t chentowsky/multi-nginx ./nginx 
+    - docker build -t chentowsky/multi-server ./server 
+    - docker build -t chentowsky/multi-worker ./worker 
+    #Log in into Docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Push the image to docker hub
+    - docker push chentowsky/multi-client
+    - docker push chentowsky/multi-nginx
+    - docker push chentowsky/multi-server
+    - docker push chentowsky/multi-worker
